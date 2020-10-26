@@ -1,0 +1,48 @@
+************
+Instructions
+************
+* This Questionnaire is intended to test your understanding of shell related concepts.
+* Each question carries 1 pt.
+* Replace the comments in the space after each question with your answer.
+* Answer the questions in 1-2 sentences.
+
+*********
+Questions
+*********
+
+After graduation, you joined an early-stage embedded systems startup that uses signals to trigger certain IoT functionalities.
+While dealing with a bug, you found code that uses a global linked list to store the status (running or reaped) of child processes in the system.
+Elements are being added or deleted in the linked list to keep track of jobs, even though the maximum number of child processes running concurrently is a constant.
+You also note that the linked list is being manipulated within both the signal handlers and the rest of the program alike, without any particular precautions.
+Having taken 1x-x13, you know this is a bad design.
+
+1. How will you explain to your teammates that this design is bad? (1 pt)
+
+This is an example of a classic synchronization error known as a race. The race between addjob and deletejob leads to the error.
+
+After listening to your explanation, your teammates ask you a couple more questions regarding your new proposed solution:
+
+2. The shell is required to wait until a foreground job is no longer running before allowing a user to start a new job.
+What is the preferred method of implementing this kind of waiting and why is it so?
+[Note: Remember that background jobs are also in the picture while thinking of a solution.]
+
+Utilize the method of explicitly waiting for signals by sigsuspend in a loop, while allowing background jobs running normally.
+
+3. Since signals are not queued, how do you guarantee that all your children are reaped when handling SIGCHLD signals? (1pt)
+
+We need to install signal handler and block the signals while reaping and unblock them while done.
+
+4. The shell implementation requires that a parent adds child processes to a job list before it deletes them.
+However, it is possible that a child exits before the parent is able to do this.
+How can we ensure that a child is always added to a job list before it is deleted?
+
+One way to eliminate the race is to block SIGCHLD signals before the call to fork and then unblocking them only after we have called addjob
+, we guarantee that the child will be reaped after it is added to the job list.
+
+Further exploring the code, you find that printf is being used for logging and debugging in the signal handler functions.
+Again, you know straight away that this is bad practice.
+
+5. Why is using printf a bad idea? What kind of functions can be used in signal handlers? (1pt)
+
+printf is not async-signal-safe, use sio_print instead. 
+
